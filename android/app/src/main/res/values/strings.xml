@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Billi</string>
+    <string name="title_activity_main">Billi</string>
+    <string name="package_name">com.billi.app</string>
+    <string name="custom_url_scheme">com.billi.app</string>
+    <string name="accessibility_service_description">Billi App Locker detects opened distracting apps during active study timer sessions to help you stay focused.</string>
+</resources>

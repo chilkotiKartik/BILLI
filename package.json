@@ -11,5 +11,10 @@
   "devDependencies": {
     "@supabase/supabase-js": "^2.117.2",
     "axe-core": "^4.10.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2"
   }
 }
