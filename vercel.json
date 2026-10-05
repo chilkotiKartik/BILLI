@@ -1,1 +1,2 @@
-{ "outputDirectory": "web", "framework": null, "buildCommand": null }
+{ "outputDirectory": "web", "cleanUrls": true, "framework": null, "buildCommand": null }
+

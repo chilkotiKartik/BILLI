@@ -58,8 +58,9 @@ async function ask(text) {
     const r = await fetch(`${C.supabaseUrl}/functions/v1/billi-ask`, { method: "POST", headers: { "content-type": "application/json", apikey: C.supabaseKey, authorization: `Bearer ${session?.access_token || ""}` },
       body: JSON.stringify({ messages: msgs.filter(m => !m.err).map(m => ({ role: m.role, content: m.content })), context: ctx }) });
     const j = await r.json().catch(() => ({}));
-    if (j.code === "not_configured") { off = true; msgs.pop(); busy = false; keep(); render(); $("#a-in").value = text; return; }
+    if (j.code === "not_configured" || j.code === "NOT_FOUND" || r.status === 404) { off = true; msgs.pop(); busy = false; keep(); render(); $("#a-in").value = text; return; }
     reply = r.ok && j.text ? { role: "assistant", content: j.text + (j.truncated ? "\n\n(The answer was cut short. Ask me to continue.)" : "") } : { role: "assistant", err: true, content: WHY[j.code] || "That did not work. Try again." };
+
   } catch { reply = { role: "assistant", err: true, content: "No connection. Check your internet and try again." }; }
   msgs.push(reply); busy = false; keep(); render(); $("#a-in").focus();
 }
