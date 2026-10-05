@@ -1,0 +1,11 @@
+{
+  "name": "Billi",
+  "short_name": "Billi",
+  "description": "Class alarms, tasks and daily GATE study.",
+  "start_url": "today.html",
+  "display": "standalone",
+  "background_color": "#F6F2FF",
+  "theme_color": "#FF8A1F",
+  "lang": "en-IN",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

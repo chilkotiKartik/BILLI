@@ -1,0 +1,18 @@
+# Netlify publishes the web folder as it is. There is no build step.
+[build]
+  publish = "web"
+
+# The app's own pages must never be shown inside another site, and browsers should not guess file types.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Pages and scripts are re-checked on every visit so a new version shows up straight away; the syllabus and paper data can be kept for an hour.
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"

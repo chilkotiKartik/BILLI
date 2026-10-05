@@ -1,0 +1,15 @@
+{
+  "name": "billi",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:unit": "node --test tests/day.test.mjs tests/gate.test.mjs tests/mock.test.mjs",
+    "test:api": "node tests/api.test.mjs",
+    "test:e2e": "python3 tests/e2e.py",
+    "serve": "python3 -m http.server 4173 --directory web"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "axe-core": "^4.10.0"
+  }
+}

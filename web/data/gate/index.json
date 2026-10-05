@@ -1,0 +1,160 @@
+{
+ "exam": "GATE 2027",
+ "organiser": "IIT Madras",
+ "site": "https://gate2027.iitm.ac.in/",
+ "syllabus_page": "https://gate2027.iitm.ac.in/exam_papers_and_syllabus",
+ "papers_page": "https://gate2027.iitm.ac.in/download",
+ "fetched": "2026-10-04",
+ "papers": [
+  {
+   "code": "AE",
+   "name": "Aerospace Engineering",
+   "topics": 102
+  },
+  {
+   "code": "AG",
+   "name": "Agricultural Engineering",
+   "topics": 140
+  },
+  {
+   "code": "AR",
+   "name": "Architecture and Planning",
+   "topics": 271
+  },
+  {
+   "code": "BM",
+   "name": "Biomedical Engineering",
+   "topics": 55
+  },
+  {
+   "code": "BT",
+   "name": "Biotechnology",
+   "topics": 167
+  },
+  {
+   "code": "CE",
+   "name": "Civil Engineering",
+   "topics": 151
+  },
+  {
+   "code": "CH",
+   "name": "Chemical Engineering",
+   "topics": 105
+  },
+  {
+   "code": "CS",
+   "name": "Computer Science and Information Technology",
+   "topics": 51
+  },
+  {
+   "code": "CY",
+   "name": "Chemistry",
+   "topics": 168
+  },
+  {
+   "code": "DA",
+   "name": "Data Science and Artificial Intelligence",
+   "topics": 16
+  },
+  {
+   "code": "EC",
+   "name": "Electronics and Communication Engineering",
+   "topics": 46
+  },
+  {
+   "code": "EE",
+   "name": "Electrical Engineering",
+   "topics": 41
+  },
+  {
+   "code": "ES",
+   "name": "Environmental Science and Engineering",
+   "topics": 159
+  },
+  {
+   "code": "EY",
+   "name": "Ecology and Evolution",
+   "topics": 105
+  },
+  {
+   "code": "GE",
+   "name": "Geomatics Engineering",
+   "topics": 15
+  },
+  {
+   "code": "GG",
+   "name": "Geology and Geophysics",
+   "topics": 184
+  },
+  {
+   "code": "IN",
+   "name": "Instrumentation Engineering",
+   "topics": 70
+  },
+  {
+   "code": "MA",
+   "name": "Mathematics",
+   "topics": 55
+  },
+  {
+   "code": "ME",
+   "name": "Mechanical Engineering",
+   "topics": 126
+  },
+  {
+   "code": "MN",
+   "name": "Mining Engineering",
+   "topics": 102
+  },
+  {
+   "code": "MT",
+   "name": "Metallurgical Engineering",
+   "topics": 141
+  },
+  {
+   "code": "NM",
+   "name": "Naval Architecture and Marine Engineering",
+   "topics": 104
+  },
+  {
+   "code": "PE",
+   "name": "Petroleum Engineering",
+   "topics": 135
+  },
+  {
+   "code": "PH",
+   "name": "Physics",
+   "topics": 101
+  },
+  {
+   "code": "PI",
+   "name": "Production and Industrial Engineering",
+   "topics": 143
+  },
+  {
+   "code": "RA",
+   "name": "Robotics and Automation",
+   "topics": 81
+  },
+  {
+   "code": "ST",
+   "name": "Statistics",
+   "topics": 24
+  },
+  {
+   "code": "XE",
+   "name": "Engineering Sciences",
+   "topics": 554
+  },
+  {
+   "code": "XH",
+   "name": "Humanities & Social Sciences",
+   "topics": 416
+  },
+  {
+   "code": "XL",
+   "name": "Life Sciences",
+   "topics": 284
+  }
+ ]
+}
