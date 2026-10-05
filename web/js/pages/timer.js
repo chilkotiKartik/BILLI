@@ -1,5 +1,7 @@
 import { sb, $, $$, esc, cat, I, mountShell, pageHead, requireSession, getProfile, pad, isoDate, fmtDur, toast, fail, TRACKS, openDialog } from "../core.js";
 import { startAlarms, ping } from "../alarm.js";
+import { BilliNative } from "../native.js";
+
 
 mountShell("timer");
 const { user } = await requireSession();
@@ -118,19 +120,42 @@ main.addEventListener("change", e => {
 main.addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
   const now = Date.now();
-  if (b.id === "go") { const p = PRESETS[S.preset]; S = { ...S, phase: "focus", began: now, startedAt: now, acc: 0, running: true, target: p ? p[0] * MIN : null }; lock(true); }
-  else if (b.id === "pause") { S.acc = elapsed(); S.running = false; lock(false); }
-  else if (b.id === "resume") { S.startedAt = now; S.running = true; lock(true); }
-  else if (b.id === "skip") { S = { ...blank(), preset: S.preset, track: S.track }; }
+  const getBlocked = () => {
+    try { return JSON.parse(localStorage.getItem("billi_blocked_apps") || '["com.instagram.android","com.google.android.youtube","com.zhiliaoapp.musically","com.twitter.android","com.reddit.frontpage","com.facebook.katana"]'); }
+    catch { return ["com.instagram.android","com.google.android.youtube"]; }
+  };
+
+  if (b.id === "go") {
+    const p = PRESETS[S.preset];
+    S = { ...S, phase: "focus", began: now, startedAt: now, acc: 0, running: true, target: p ? p[0] * MIN : null };
+    lock(true);
+    BilliNative.startFocus(getBlocked());
+    if (S.target) BilliNative.scheduleExactAlarm(101, now + S.target, "Focus session complete", "Time for your break!");
+  }
+  else if (b.id === "pause") {
+    S.acc = elapsed(); S.running = false; lock(false);
+    BilliNative.stopFocus();
+  }
+  else if (b.id === "resume") {
+    S.startedAt = now; S.running = true; lock(true);
+    BilliNative.startFocus(getBlocked());
+    if (S.target) BilliNative.scheduleExactAlarm(101, now + (S.target - S.acc), "Focus session complete", "Time for your break!");
+  }
+  else if (b.id === "skip") {
+    S = { ...blank(), preset: S.preset, track: S.track };
+    BilliNative.stopFocus();
+  }
   else if (b.id === "study") { studyMode(!document.body.classList.contains("study")); paint(true); $("#study")?.focus(); return; }
   else if (b.id === "finish") {
     const secs = Math.floor(elapsed() / 1000); b.disabled = true;
+    BilliNative.stopFocus();
     if (secs >= 60) { try { await record(secs); toast(`Saved ${fmtDur(secs / 60)} of ${TRACKS[S.track]} study.`, "ok"); } catch (x) { b.disabled = false; fail(x, "Could not save this session. Check your internet."); return; } }
     else toast("Under a minute, so nothing was saved.");
     S = { ...blank(), preset: S.preset, track: S.track }; lock(false);
   } else return;
   save(); render(); $("#ctl button")?.focus();
 });
+
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) { if (S.phase === "focus" && S.running) awayAt = Date.now(); return; }
   tick(); if (S.running && S.phase === "focus") lock(true);

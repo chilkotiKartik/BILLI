@@ -1,5 +1,7 @@
 import { sb, $, esc, I, mountShell, pageHead, requireSession, getProfile, toast, fail, busy, fmtDur } from "../core.js";
 import { startAlarms, testRing, preview, TONE_NAMES } from "../alarm.js";
+import { BilliNative } from "../native.js";
+
 
 mountShell("gear");
 const { user } = await requireSession();
@@ -36,22 +38,54 @@ function render() {
       <p id="s-nstate" class="muted" style="font-size:15.5px">${notifState()}</p>
       <div class="rowflex"><button type="button" class="btn sm" id="s-notif">${I.bell}Allow notifications</button><button type="button" class="btn sm" id="s-test">Test alarm</button><button type="button" class="btn sm" id="s-test2">Test solve to stop</button></div>
     </section>
+    <section class="card stack" aria-labelledby="s-locker"><h2 id="s-locker">App Locker & Distraction Shield</h2>
+      <p class="muted" style="font-size:15px">Block distracting apps on Android while your study timer is running.</p>
+      <div id="locker-list" class="stack" style="gap:8px">
+        ${[
+          { id: "com.instagram.android", label: "Instagram" },
+          { id: "com.google.android.youtube", label: "YouTube" },
+          { id: "com.twitter.android", label: "X / Twitter" },
+          { id: "com.reddit.frontpage", label: "Reddit" },
+          { id: "com.zhiliaoapp.musically", label: "TikTok / Reels" },
+          { id: "com.facebook.katana", label: "Facebook" },
+          { id: "com.discord", label: "Discord" }
+        ].map(app => {
+          const currentBlocked = JSON.parse(localStorage.getItem("billi_blocked_apps") || '["com.instagram.android","com.google.android.youtube","com.twitter.android","com.reddit.frontpage"]');
+          const isChecked = currentBlocked.includes(app.id);
+          return `<label class="switch"><span><b>${esc(app.label)}</b></span><input type="checkbox" class="s-app-block" data-pkg="${esc(app.id)}" ${isChecked ? "checked" : ""}></label>`;
+        }).join("")}
+      </div>
+      <div class="rowflex" style="margin-top:8px">
+        <button type="button" class="btn sm" id="s-access">Open Android Accessibility Settings</button>
+      </div>
+    </section>
     <p class="err" id="s-err" role="alert"></p>
     <div class="rowflex between"><button class="btn primary" type="submit">Save settings</button><button type="button" class="btn" id="s-out">${I.out}Sign out</button></div>
   </form>`;
 }
 
+
 main.addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.id === "s-test") testRing(false);
   else if (b.id === "s-test2") testRing(true);
+  else if (b.id === "s-access") {
+    await BilliNative.openAccessibilitySettings();
+  }
   else if (b.id === "s-notif") {
     if (!("Notification" in window)) { toast("This browser cannot show notifications."); return; }
     try { await Notification.requestPermission(); } catch {}
     $("#s-nstate").textContent = notifState();
   } else if (b.id === "s-out") { await sb.auth.signOut(); location.replace("login.html"); }
 });
-main.addEventListener("change", e => { if (e.target.name === "tone") preview(e.target.value); });
+main.addEventListener("change", e => {
+  if (e.target.name === "tone") preview(e.target.value);
+  if (e.target.classList.contains("s-app-block")) {
+    const checked = [...document.querySelectorAll(".s-app-block:checked")].map(el => el.dataset.pkg);
+    try { localStorage.setItem("billi_blocked_apps", JSON.stringify(checked)); } catch {}
+  }
+});
+
 main.addEventListener("submit", async e => {
   e.preventDefault();
   const err = $("#s-err"), btn = $("[type=submit]", main);
