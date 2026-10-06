@@ -26,6 +26,9 @@ function render(note = "") {
     <p class="err" id="a-err" role="alert"></p>
     <button class="btn primary wide" type="submit">${cta}</button>
     ${mode === "in" ? `<button type="button" class="linkbtn" data-to="reset" style="justify-self:center">Forgot your password?</button>` : ""}
+    <div style="text-align:center;margin-top:6px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08)">
+      <button type="button" class="btn wide sm" id="a-guest" style="background:#242933;color:#d8dee9;border:1px solid #3b4252">⚡ Instant Access (Offline / Guest Mode)</button>
+    </div>
   </form>
   ${q ? `<p style="text-align:center">${q} <button class="linkbtn" data-to="${to}">${alt}</button></p>` : ""}`;
   (mode === "up" ? $("#a-name") : mode === "newpass" ? $("#a-pass") : $("#a-email")).focus();
@@ -38,7 +41,15 @@ const human = m => /Invalid login credentials/i.test(m) ? "That email and passwo
   : /Password should/i.test(m) ? "Use a longer password, at least 8 characters."
   : "That did not work. Try again.";
 
-main.addEventListener("click", e => { const b = e.target.closest("[data-to]"); if (b) { mode = b.dataset.to; render(); } });
+main.addEventListener("click", e => {
+  const b = e.target.closest("[data-to]");
+  if (b) { mode = b.dataset.to; render(); return; }
+  if (e.target.id === "a-guest") {
+    const guestUser = { id: "guest_local_" + Date.now(), email: "guest@billi.app", user_metadata: { name: "Billi Scholar" } };
+    try { localStorage.setItem("billi_local_user", JSON.stringify(guestUser)); } catch {}
+    location.replace("today.html");
+  }
+});
 main.addEventListener("submit", async e => {
   e.preventDefault();
   const err = $("#a-err"), btn = $("[type=submit]", main), email = $("#a-email")?.value.trim(), password = $("#a-pass")?.value, here = location.origin + location.pathname;

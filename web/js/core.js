@@ -32,21 +32,71 @@ export const TRACKS = { college: "College", gate: "GATE", personal: "Personal" }
 export const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---------- sign-in guard and profile ---------- */
+const timeoutPromise = (p, ms) => Promise.race([
+  p,
+  new Promise((_, reject) => setTimeout(() => reject(new Error("auth_timeout")), ms))
+]);
+
 export async function requireSession() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { location.replace("login.html"); return new Promise(() => {}); }
-  return session;
+  try {
+    const res = await timeoutPromise(sb.auth.getSession(), 2000).catch(() => null);
+    if (res && res.data && res.data.session) {
+      localStorage.setItem("billi_last_auth", JSON.stringify(res.data.session.user));
+      return res.data.session;
+    }
+  } catch {}
+
+  // Check saved session or local guest session
+  try {
+    const saved = localStorage.getItem("billi_last_auth") || localStorage.getItem("billi_local_user");
+    if (saved) {
+      const u = JSON.parse(saved);
+      return { user: u };
+    }
+  } catch {}
+
+  // Auto create guest offline user so the app NEVER hangs on loading
+  const guestUser = { id: "guest_local_" + Date.now(), email: "guest@billi.app", user_metadata: { name: "Billi Scholar" } };
+  try { localStorage.setItem("billi_local_user", JSON.stringify(guestUser)); } catch {}
+  return { user: guestUser };
 }
+
 export async function getProfile(user) {
-  let { data, error } = await sb.from("billi_profiles").select("*").eq("id", user.id).maybeSingle();
-  if (error) throw error;
-  if (!data) {
-    const name = String(user.user_metadata?.name || "").slice(0, 40);
-    const r = await sb.from("billi_profiles").insert({ id: user.id, name }).select().single();
-    if (r.error) throw r.error;
-    data = r.data;
-  }
-  return data;
+  const localKey = "billi_profile_" + user.id;
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(localKey) || "null"); } catch {}
+
+  try {
+    const res = await timeoutPromise(sb.from("billi_profiles").select("*").eq("id", user.id).maybeSingle(), 2000);
+    if (res && res.data) {
+      localStorage.setItem(localKey, JSON.stringify(res.data));
+      return res.data;
+    }
+    if (res && !res.data && !user.id.startsWith("guest_")) {
+      const name = String(user.user_metadata?.name || user.email?.split("@")[0] || "Scholar").slice(0, 40);
+      const r = await sb.from("billi_profiles").insert({ id: user.id, name }).select().single();
+      if (r.data) {
+        localStorage.setItem(localKey, JSON.stringify(r.data));
+        return r.data;
+      }
+    }
+  } catch {}
+
+  if (cached) return cached;
+  const defaultProf = {
+    id: user.id,
+    name: user.user_metadata?.name || "Billi Scholar",
+    gate_paper: "CS",
+    gate_exam_date: "2027-02-06",
+    gate_min: 120,
+    gate_max: 240,
+    lead_min: 10,
+    sound: true,
+    ringtone: "uncle_ji",
+    gate_parts_off: []
+  };
+  try { localStorage.setItem(localKey, JSON.stringify(defaultProf)); } catch {}
+  return defaultProf;
 }
 
 /* ---------- icons (drawn for this app) ---------- */
