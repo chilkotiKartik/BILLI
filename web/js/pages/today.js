@@ -3,6 +3,7 @@ import { loadDay } from "../data.js";
 import { loadGate } from "../gate-data.js";
 import { startAlarms, setDay } from "../alarm.js";
 import { playIntro } from "../intro.js";
+import { mascot } from "../mascot.js";
 
 mountShell("today");
 const { user } = await requireSession();
@@ -48,15 +49,15 @@ function render() {
   const gateDays = daysUntil(profile.gate_exam_date), done = Math.floor(day.gateDoneMin), pct = Math.min(100, Math.round(done / profile.gate_min * 100));
   const n = day.next, real = day.events.filter(e => e.kind !== "gate");
   const empty = !real.length && !day.loose.length;
-  main.innerHTML = `${pageHead("Today", `${DAYS_LONG[dayNum(now) - 1]}, ${now.getDate()} ${now.toLocaleString("en-IN", { month: "long" })}`)}
+  main.innerHTML = `${pageHead("Today's Dashboard", `${DAYS_LONG[dayNum(now) - 1]}, ${now.getDate()} ${now.toLocaleString("en-IN", { month: "long" })}`)}
   <div class="stack">
-    <section class="scene" aria-label="Billi says"><div class="catbox">${skyWindow()}${cat(m)}</div><p class="bubble">${esc(line)}</p></section>
+    <div id="today-mascot-bar"></div>
     <div class="counts">
       <div class="count"><b class="num">${gateDays >= 0 ? gateDays : 0}</b><span>${gateDays === 1 ? "day" : "days"} to GATE</span></div>
       <div class="count"><b class="num">${day.tasksLeft}</b><span>${day.tasksLeft === 1 ? "task" : "tasks"} left today</span></div>
     </div>
     <section class="card" aria-labelledby="gate-h">
-      <div class="rowflex between"><h2 id="gate-h" style="font-size:18px">GATE study today</h2><span class="num">${fmtDur(done)} of ${fmtDur(profile.gate_min)}</span></div>
+      <div class="rowflex between"><h2 id="gate-h" style="font-size:18px">GATE Study Goal</h2><span class="num">${fmtDur(done)} of ${fmtDur(profile.gate_min)}</span></div>
       <div class="bar${pct >= 100 ? " done" : ""}" style="margin:10px 0 12px" role="progressbar" aria-valuemin="0" aria-valuemax="${profile.gate_min}" aria-valuenow="${Math.min(done, profile.gate_min)}" aria-label="GATE study minutes today"><i style="width:${pct}%"></i></div>
       <div class="rowflex between"><span class="muted">${done >= profile.gate_max ? "That is your limit for today. Rest." : pct >= 100 ? "Daily goal reached." : `${fmtDur(profile.gate_min - done)} to go`}</span><a class="btn gate sm" href="timer.html?track=gate">${I.play}Start GATE timer</a></div>
       <p style="margin-top:12px;padding-top:10px;border-top:2px dashed var(--line);overflow-wrap:anywhere">${!profile.gate_paper ? `<a href="gate.html">Choose your GATE paper</a> to see what to study next.`
@@ -68,6 +69,7 @@ function render() {
     <section aria-labelledby="sch-h"><h2 id="sch-h" class="section-t">Schedule</h2><ul class="list" style="list-style:none;padding:0;margin:0">${day.events.map(e => row(e, now)).join("") || `<li class="muted" style="padding:12px 0">No classes or timed tasks today.</li>`}</ul></section>
     ${day.loose.length ? `<section aria-labelledby="any-h"><h2 id="any-h" class="section-t">Any time</h2><ul class="list" style="list-style:none;padding:0;margin:0">${day.loose.map(e => `<li class="item${e.done ? " off" : ""}" style="grid-template-columns:minmax(0,1fr) auto"><div><div class="t">${esc(e.title)}</div><div class="s">${e.overdue ? "From an earlier day" : fmtDur(e.task.duration_min)}</div></div><div class="item-r">${e.overdue ? '<span class="tag bad">Late</span>' : `<span class="tag ${e.track}">${TRACKS[e.track]}</span>`}${tick(e.task)}</div></li>`).join("")}</ul></section>` : ""}`}
   </div>`;
+  mascot.renderWidget($("#today-mascot-bar"), m === "play" ? "completed" : "idle", line);
 }
 
 async function reload() { day = await loadDay(user, profile); setDay(day); render(); }
@@ -80,8 +82,9 @@ main.addEventListener("click", async e => {
       tk.setAttribute("aria-checked", done); tk.disabled = true; if (done) pawBurst(tk);
       const { error } = await sb.from("billi_tasks").update({ done, done_at: done ? new Date().toISOString() : null }).eq("id", tk.dataset.tick);
       if (error) throw error;
+      if (done) mascot.addXp(10);
       await reload();
-      if (done) { $(".scene .cat")?.classList.add("pounce"); toast(day.tasksLeft ? "Done. Nice." : "All tasks done.", "ok"); }
+      if (done) { $(".scene .cat")?.classList.add("pounce"); toast(day.tasksLeft ? "Task done! +10 XP" : "All tasks done! +10 XP", "ok"); }
       $(`[data-tick="${tk.dataset.tick}"]`)?.focus();
     } else if (sk) {
       sk.disabled = true;

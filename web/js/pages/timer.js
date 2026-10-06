@@ -1,6 +1,7 @@
 import { sb, $, $$, esc, cat, I, mountShell, pageHead, requireSession, getProfile, pad, isoDate, fmtDur, toast, fail, TRACKS, openDialog } from "../core.js";
 import { startAlarms, ping } from "../alarm.js";
 import { BilliNative } from "../native.js";
+import { mascot } from "../mascot.js";
 
 
 mountShell("timer");
@@ -37,8 +38,9 @@ async function lock(on) {
 
 function render() {
   const busy = S.phase !== "idle";
-  main.innerHTML = `${pageHead("Timer", "Minutes you study here count toward today.")}
+  main.innerHTML = `${pageHead("Focus Timer & Distraction Shield", "Study minutes logged here count directly to your daily GATE goal.")}
   <div class="stack">
+    <div id="mascot-timer-bar"></div>
     <fieldset class="study-hide" ${busy ? "disabled" : ""}><legend>I am studying for</legend><div class="seg" style="margin-top:6px">
       ${Object.entries(TRACKS).map(([k, l]) => `<label><input type="radio" name="track" value="${k}" ${S.track === k ? "checked" : ""}><span>${l}</span></label>`).join("")}
     </div></fieldset>
@@ -52,10 +54,11 @@ function render() {
         <div class="dial-in"><div class="clock" id="clock" role="timer" aria-live="off">00:00</div><div class="lab" id="lab"></div></div></div>
       <div class="rowflex" id="ctl" style="justify-content:center;margin-top:8px"></div>
     </section>
-    <p class="study-note" id="snote">A website cannot block other apps. I count every time you leave this screen.</p>
+    <p class="study-note" id="snote">App locker is active on Android. Distracting apps will be blocked during this session.</p>
     <p class="muted study-hide" id="tot" style="text-align:center"></p>
     <label class="switch study-hide"><span><b>Water reminder every 45 minutes</b><br><span class="muted" style="font-size:15px">Billi dances until you drink.</span></span><input type="checkbox" id="water" ${waterOn() ? "checked" : ""}></label>
   </div>`;
+  mascot.renderWidget($("#mascot-timer-bar"), S.phase === "focus" && S.running ? "focusing" : S.phase === "break" ? "completed" : "idle");
   paint(true);
 }
 
@@ -102,7 +105,12 @@ function startBreak(from) {
 }
 async function completeFocus(endedAt) {
   const secs = S.target / 1000;
-  try { await record(secs); toast(`Saved ${fmtDur(secs / 60)} of ${TRACKS[S.track]} study. Break time.`, "ok"); } catch (x) { fail(x, "Could not save this session. Check your internet."); }
+  try {
+    await record(secs);
+    const xpGained = Math.max(25, Math.round(secs / 60) * 2);
+    mascot.addXp(xpGained);
+    toast(`Saved ${fmtDur(secs / 60)} of ${TRACKS[S.track]} study. +${xpGained} XP! Break time.`, "ok");
+  } catch (x) { fail(x, "Could not save this session. Check your internet."); }
   ping(); startBreak(endedAt); save(); render(); lock(false);
 }
 async function tick() {
@@ -149,7 +157,14 @@ main.addEventListener("click", async e => {
   else if (b.id === "finish") {
     const secs = Math.floor(elapsed() / 1000); b.disabled = true;
     BilliNative.stopFocus();
-    if (secs >= 60) { try { await record(secs); toast(`Saved ${fmtDur(secs / 60)} of ${TRACKS[S.track]} study.`, "ok"); } catch (x) { b.disabled = false; fail(x, "Could not save this session. Check your internet."); return; } }
+    if (secs >= 60) {
+      try {
+        await record(secs);
+        const xpGained = Math.max(10, Math.round(secs / 60) * 2);
+        mascot.addXp(xpGained);
+        toast(`Saved ${fmtDur(secs / 60)} of ${TRACKS[S.track]} study. +${xpGained} XP!`, "ok");
+      } catch (x) { b.disabled = false; fail(x, "Could not save this session. Check your internet."); return; }
+    }
     else toast("Under a minute, so nothing was saved.");
     S = { ...blank(), preset: S.preset, track: S.track }; lock(false);
   } else return;

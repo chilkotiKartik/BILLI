@@ -161,17 +161,37 @@ function label(ev) {
   if (ev.kind === "gate") return { title: "GATE study time", line: `${ev.minutes} minutes are free now` };
   return { title: ev.title, line: `Task at ${time}` };
 }
+
+function generatePuzzle() {
+  const types = ["add_mult", "mod", "algebra", "hex_bin"];
+  const pick = types[Math.floor(Math.random() * types.length)];
+  if (pick === "add_mult") {
+    const a = 12 + Math.floor(Math.random() * 25), b = 3 + Math.floor(Math.random() * 7), c = 10 + Math.floor(Math.random() * 30);
+    return { q: `${a} × ${b} + ${c}`, ans: a * b + c };
+  } else if (pick === "mod") {
+    const a = 100 + Math.floor(Math.random() * 150), b = 7 + Math.floor(Math.random() * 9);
+    return { q: `${a} mod ${b}`, ans: a % b };
+  } else if (pick === "algebra") {
+    const x = 3 + Math.floor(Math.random() * 15), k = 2 + Math.floor(Math.random() * 5), m = 5 + Math.floor(Math.random() * 20);
+    const rhs = k * x + m;
+    return { q: `Find x: ${k}x + ${m} = ${rhs}`, ans: x };
+  } else {
+    const a = 15 + Math.floor(Math.random() * 35), b = 10 + Math.floor(Math.random() * 30);
+    return { q: `${a} + ${b}`, ans: a + b };
+  }
+}
+
 function ring(ev) {
   if (current) { queue.push(ev); return; }
   current = ev; markFired(ev.id);
   const { title, line } = label(ev);
-  const a = 12 + Math.floor(Math.random() * 38), b = 11 + Math.floor(Math.random() * 38);
+  const p = generatePuzzle();
   const d = document.createElement("dialog");
   d.className = "ring"; d.setAttribute("role", "alertdialog"); d.setAttribute("aria-labelledby", "ring-t"); d.setAttribute("aria-describedby", "ring-l");
   d.innerHTML = `<div class="ring-cat">${cat("yowl", "Billi is calling you")}</div>
     <h2 id="ring-t">${esc(title)}</h2><p id="ring-l">${esc(line)}</p>
-    ${ev.strict ? `<form class="ring-sum" novalidate><label for="ring-a">Solve to stop: ${a} + ${b}</label><div class="ring-sumrow"><input id="ring-a" inputmode="numeric" autocomplete="off" aria-describedby="ring-e"><button class="btn primary" type="submit">Stop</button></div><p id="ring-e" class="err" role="alert"></p></form>` : ""}
-    <div class="ring-actions"><button class="btn primary" id="ring-stop" ${ev.strict ? "hidden" : ""}>Stop</button><button class="btn" id="ring-snooze">Snooze 5 min</button></div>`;
+    ${ev.strict ? `<form class="ring-sum" novalidate><label for="ring-a">🧠 <b>Wake-Up Challenge</b>: Solve to stop audio:<br><span style="font-size:18px;color:#f59e0b;font-weight:700">${esc(p.q)}</span></label><div class="ring-sumrow" style="margin-top:8px"><input id="ring-a" inputmode="numeric" autocomplete="off" placeholder="Enter answer" aria-describedby="ring-e"><button class="btn primary" type="submit">Unlock & Stop</button></div><p id="ring-e" class="err" role="alert"></p></form>` : ""}
+    <div class="ring-actions"><button class="btn primary" id="ring-stop" ${ev.strict ? "hidden" : ""}>Stop Alarm</button><button class="btn" id="ring-snooze">Snooze 5 min</button></div>`;
   document.body.appendChild(d);
   const done = () => { stopSound(); if (navigator.vibrate) navigator.vibrate(0); d.close(); d.remove(); current = null; const n = queue.shift(); if (n) ring(n); };
   d.addEventListener("cancel", e => { if (ev.strict && $("#ring-stop", d).hidden) e.preventDefault(); else { e.preventDefault(); done(); } });
@@ -182,8 +202,16 @@ function ring(ev) {
     const escape = setTimeout(() => { $("#ring-stop", d).hidden = false; }, 120000);     // never trap the phone
     $(".ring-sum", d).addEventListener("submit", e => {
       e.preventDefault();
-      if (Number($("#ring-a", d).value.trim()) === a + b) { clearTimeout(escape); done(); return; }
-      tries++; $("#ring-e", d).textContent = tries >= 3 ? "Not right. You can also use Stop below." : "Not right. Try again.";
+      if (Number($("#ring-a", d).value.trim()) === p.ans) {
+        clearTimeout(escape);
+        try {
+          const curXp = parseInt(localStorage.getItem("billi_xp") || "0", 10);
+          localStorage.setItem("billi_xp", (curXp + 20).toString());
+        } catch {}
+        done();
+        return;
+      }
+      tries++; $("#ring-e", d).textContent = tries >= 3 ? "Incorrect. You can also use Stop below." : "Incorrect. Try again!";
       if (tries >= 3) $("#ring-stop", d).hidden = false;
       $("#ring-a", d).select();
     });

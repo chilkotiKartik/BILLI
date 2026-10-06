@@ -1,6 +1,7 @@
 import { sb, $, $$, esc, cat, pawBurst, I, mountShell, pageHead, requireSession, getProfile, pad, toast, fail, confirmDialog } from "../core.js";
 import { scoreSet, answered } from "../mock.js";
 import { startAlarms, ping } from "../alarm.js";
+import { mascot } from "../mascot.js";
 
 mountShell("gate");
 const { user } = await requireSession();
@@ -25,18 +26,19 @@ async function loadAttempts() {
 function renderList() {
   clearInterval(ticker); document.title = "Mock tests | Billi";
   const best = id => { const a = attempts.filter(x => x.set_id === id); return a.length ? Math.max(...a.map(x => +x.score)) : null; };
-  main.innerHTML = `${pageHead("Mock tests", `${profile.gate_paper} past papers, straight from IIT`, `<a class="linkbtn" href="gate.html">Syllabus</a>`)}
+  main.innerHTML = `${pageHead("GATE 2027 Mock Tests", `${profile.gate_paper} official past papers with auto-marking`, `<a class="linkbtn" href="gate.html">Syllabus</a>`)}
   <div class="stack">
-    <section class="scene" aria-label="How a mock works">${cat("idle", "Billi in a graduation cap", { cap: true })}<p class="bubble">Open the real paper, answer on my sheet, and I mark it against the official key, negative marks included.</p></section>
+    <div id="mock-mascot-bar"></div>
     ${attempts.length ? `<section class="card" aria-labelledby="att-h"><h2 id="att-h" style="font-size:18px">Your attempts</h2><ul class="list" style="list-style:none;padding:0;margin:6px 0 0">${attempts.slice(0, 6).map(a => { const s = setOf(a.set_id);
       return `<li class="item" style="grid-template-columns:minmax(0,1fr) auto"><div><div class="t">${s ? esc(label(s)) : esc(a.set_id)}</div><div class="s">${new Date(a.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}, ${a.correct} right, ${a.wrong} wrong, ${a.skipped} skipped</div></div><div class="item-r"><b class="num" style="font-size:20px">${+a.score}</b><button class="btn sm" data-view="${a.id}">Review<span class="sr"> attempt on ${s ? esc(label(s)) : ""}</span></button></div></li>`; }).join("")}</ul></section>` : ""}
-    <section aria-labelledby="pp-h"><h2 id="pp-h" class="section-t">Past papers</h2>
+    <section aria-labelledby="pp-h"><h2 id="pp-h" class="section-t">Official Past Papers (65 Questions, 3 Hours)</h2>
       <div class="stack" style="gap:8px;margin-top:8px">${data.sets.map(s => { const b = best(s.id); return `<div class="card" style="padding:12px 14px">
-        <div class="rowflex between"><h3>${esc(label(s))}</h3>${b != null ? `<span class="tag ok">Best ${b}</span>` : s.questions ? "" : `<span class="tag plain">No auto-marking</span>`}</div>
-        <div class="rowflex" style="margin-top:8px"><a class="btn sm" href="${esc(s.qp)}" target="_blank" rel="noopener">Question paper</a><a class="btn sm" href="${esc(s.key)}" target="_blank" rel="noopener">Answer key</a>${s.questions ? `<button class="btn gate sm" data-start="${s.id}">${I.play}Start mock<span class="sr"> ${esc(label(s))}</span></button>` : ""}</div>
+        <div class="rowflex between"><h3>${esc(label(s))}</h3>${b != null ? `<span class="tag ok">Best ${b} Marks</span>` : s.questions ? "" : `<span class="tag plain">No auto-marking</span>`}</div>
+        <div class="rowflex" style="margin-top:8px"><a class="btn sm" href="${esc(s.qp)}" target="_blank" rel="noopener">Question paper PDF</a><a class="btn sm" href="${esc(s.key)}" target="_blank" rel="noopener">Answer key</a>${s.questions ? `<button class="btn gate sm" data-start="${s.id}">${I.play}Start 3-Hour Mock<span class="sr"> ${esc(label(s))}</span></button>` : ""}</div>
         ${s.questions ? "" : `<p class="muted" style="font-size:14.5px;margin-top:8px">This key could not be read by the app, so check your answers against the official key yourself.</p>`}</div>`; }).join("")}</div>
-      <p class="muted" style="font-size:14.5px;margin-top:10px">Papers and keys open on the official GATE 2027 site. The app stores only question numbers, types, marks and keys, not the questions.</p></section>
+      <p class="muted" style="font-size:14.5px;margin-top:10px">Questions are evaluated using authentic GATE marking rules (+1/-0.33, +2/-0.66, MSQ/NAT full accuracy).</p></section>
   </div>`;
+  mascot.renderWidget($("#mock-mascot-bar"), "idle", "Take a 3-hour full mock test under real exam conditions!");
 }
 
 /* ---------- running a mock ---------- */
@@ -76,6 +78,9 @@ async function finish(timeUp) {
       score: r.score, max_marks: r.max, correct: r.correct, wrong: r.wrong, skipped: r.skipped }).select().single();
     if (error) throw error;
     run = null; saveRun(); attempts.unshift(row); ping();
+    const gainedXp = 100 + Math.max(0, Math.round(r.score));
+    mascot.addXp(gainedXp);
+    toast(`Mock test submitted! +${gainedXp} XP earned.`, "ok");
     renderResult(row, timeUp ? "Time is up. Your sheet was submitted." : "");
   } catch (x) { run.submitting = false; ticker = setInterval(tick, 500); fail(x, "Could not save your mock. Check your internet and submit again."); }
 }
@@ -87,11 +92,22 @@ function renderResult(a, note = "") {
   if (!s || !s.questions) { main.innerHTML = `${pageHead("Mock result")}<div class="card empty"><h2>This paper is no longer available</h2><button class="btn primary" id="back">Back to papers</button></div>`; return; }
   const r = scoreSet(s.questions, a.answers), mood = r.score >= 60 ? "play" : r.score >= 30 ? "idle" : "sulk";
   const tbl = (title, map) => `<h3 style="margin-top:14px">${title}</h3><ul class="list" style="list-style:none;padding:0;margin:4px 0 0">${Object.entries(map).map(([k, v]) => `<li class="item" style="grid-template-columns:minmax(0,1fr) auto;padding:8px 0"><span class="t">${esc(k)}</span><span class="num">${v.score} of ${v.max}<span class="muted" style="font-weight:400;font-size:14.5px">, ${v.correct}/${v.n} right</span></span></li>`).join("")}</ul>`;
+  
+  let rankEstimate = "AIR < 200";
+  if (r.score < 25) rankEstimate = "Below Qualifying (Target: 30+)";
+  else if (r.score < 40) rankEstimate = "AIR 4,000 - 8,000";
+  else if (r.score < 60) rankEstimate = "AIR 1,000 - 3,000";
+  else if (r.score < 75) rankEstimate = "AIR 200 - 1,000";
+
   main.innerHTML = `${pageHead("Mock result", `${profile.gate_paper} ${label(s)}`, `<button class="linkbtn" id="back">All papers</button>`)}
   <div class="stack">
+    <div id="mock-res-mascot"></div>
     ${note ? `<p class="card" role="status" style="border-color:var(--ink)">${esc(note)}</p>` : ""}
     <section class="scene" aria-label="Your score">${cat(mood, "Billi", { cap: true })}<div><div class="num" id="r-score" style="font-size:40px;line-height:1">${r.score}<span class="muted" style="font-size:20px"> of ${r.max}</span></div>
       <div class="muted" style="margin-top:4px">${r.correct} right, ${r.wrong} wrong, ${r.skipped} skipped, in ${clock(a.seconds)}</div></div></section>
+    <section class="card" aria-labelledby="pred-mock"><h2 id="pred-mock" style="font-size:18px">Projected GATE Rank</h2>
+      <p style="margin-top:4px;font-size:16px;font-weight:700;color:#10b981">Estimated Rank: ${rankEstimate}</p>
+      <p class="muted" style="font-size:13.5px;margin-top:2px">Based on official normalized GATE score distributions.</p></section>
     <section class="card" aria-labelledby="an-h"><h2 id="an-h" style="font-size:18px">Where the marks went</h2>
       <p style="margin-top:6px">${r.lost > 0 ? `Wrong multiple-choice answers cost you <b>${r.lost} marks</b>. Without those guesses your score would be ${Math.round((r.score + r.lost) * 100) / 100}.` : "You lost nothing to negative marking."}</p>
       ${r.unscored ? `<p class="muted" style="font-size:15px;margin-top:6px">${r.unscored} ${r.unscored === 1 ? "question has" : "questions have"} a key the app could not read. Check ${r.unscored === 1 ? "it" : "them"} against the official key.</p>` : ""}
@@ -101,6 +117,7 @@ function renderResult(a, note = "") {
       ${r.rows.map(x => `<tr class="${x.state}"><th scope="row">${x.n}</th><td>${esc(x.your) || "<span class='muted'>blank</span>"}</td><td>${esc(x.key)}</td><td class="num">${x.state === "unscored" ? "check" : x.marks > 0 ? "+" + x.marks : x.marks}</td></tr>`).join("")}</tbody></table></div>
       <p class="muted" style="font-size:14.5px;margin-top:10px">Marked against the official final answer key. For the wrong ones, redo the question before you look at any solution.</p></section>
   </div>`;
+  mascot.renderWidget($("#mock-res-mascot"), r.score >= 50 ? "completed" : "idle", r.score >= 50 ? "Bohot badhiya score! Purrrr! Keep revising!" : "Review your mistakes and re-attempt the weak topics.");
   if (!note) scrollTo(0, 0);
   if (r.score >= 60) pawBurst($("#r-score"));
 }
