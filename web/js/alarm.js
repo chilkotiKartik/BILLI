@@ -69,6 +69,23 @@ export const TONE_NAMES = {
   bell: "Bell"
 };
 
+const audioCache = new Map();
+function getAudio(src) {
+  if (!audioCache.has(src)) {
+    const a = new Audio(src);
+    a.preload = "auto";
+    audioCache.set(src, a);
+  }
+  return audioCache.get(src);
+}
+
+function preloadAll() {
+  try {
+    Object.values(AUDIO_FILES).forEach(src => getAudio(src));
+  } catch {}
+}
+["pointerdown", "keydown"].forEach(ev => addEventListener(ev, preloadAll, { once: true, passive: true }));
+
 let activeAudio = null;
 
 const toneOf = () => {
@@ -85,7 +102,8 @@ function startSound() {
   const tKey = toneOf();
   if (AUDIO_FILES[tKey]) {
     try {
-      activeAudio = new Audio(AUDIO_FILES[tKey]);
+      activeAudio = getAudio(AUDIO_FILES[tKey]);
+      activeAudio.currentTime = 0;
       activeAudio.loop = true;
       activeAudio.play().catch(() => {});
     } catch {}
@@ -109,7 +127,9 @@ export function preview(name) {
   stopSound();
   if (AUDIO_FILES[name]) {
     try {
-      activeAudio = new Audio(AUDIO_FILES[name]);
+      activeAudio = getAudio(AUDIO_FILES[name]);
+      activeAudio.currentTime = 0;
+      activeAudio.loop = false;
       activeAudio.play().catch(() => {});
     } catch {}
     return;

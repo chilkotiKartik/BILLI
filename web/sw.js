@@ -1,5 +1,5 @@
 // Service Worker for Billi: Offline Caching & Background Notifications
-const CACHE_NAME = "billi-v2";
+const CACHE_NAME = "billi-v3";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -21,7 +21,24 @@ const STATIC_ASSETS = [
   "./js/mock.js",
   "./js/alarm.js",
   "./js/data.js",
+  "./js/native.js",
   "./js/gate-data.js",
+  "./js/pages/today.js",
+  "./js/pages/timetable.js",
+  "./js/pages/tasks.js",
+  "./js/pages/timer.js",
+  "./js/pages/gate.js",
+  "./js/pages/mock.js",
+  "./js/pages/ask.js",
+  "./js/pages/class.js",
+  "./js/pages/settings.js",
+  "./js/pages/login.js",
+  "./js/pages/landing.js",
+  "./sounds/uncle_ji_pani.mp3",
+  "./sounds/funny_meme.mp3",
+  "./sounds/comedy_twinkle.mp3",
+  "./sounds/tenge_tenge.mp3",
+  "./sounds/lululu.mp3",
   "./vendor/supabase.js",
   "./icon.svg",
   "./manifest.webmanifest"
@@ -48,8 +65,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   
-  // Cache-first for static JSON datasets (gate syllabus and past papers)
-  if (url.pathname.includes("/data/")) {
+  // Cache-first for static JSON datasets and audio sounds
+  if (url.pathname.includes("/data/") || url.pathname.includes("/sounds/")) {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) => {
         return cache.match(event.request).then((cached) => {
