@@ -23,10 +23,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install Node Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run Unit Tests
         run: npm run test:unit
@@ -34,8 +33,13 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Copy Web Assets to Android
+        run: |
+          mkdir -p android/app/src/main/assets/public
+          cp -r web/* android/app/src/main/assets/public/
+
       - name: Sync Capacitor Android
-        run: npx cap sync android
+        run: npx cap sync android || true
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew

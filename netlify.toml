@@ -1,6 +1,7 @@
-# Netlify publishes the web folder as it is. There is no build step.
+# Netlify publishes the web folder.
 [build]
   publish = "web"
+  command = "echo 'Static assets ready'"
 
 # The app's own pages must never be shown inside another site, and browsers should not guess file types.
 [[headers]]
