@@ -7,10 +7,23 @@ const main = $("#main");
 let tasks = [];
 
 async function load() {
-  const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString();
-  const { data, error } = await sb.from("billi_tasks").select("*").or(`done.eq.false,done_at.gte.${weekAgo}`).order("due_date").order("due_time", { nullsFirst: false });
-  if (error) throw error;
-  tasks = data;
+  const cacheKey = `billi_tasks_${user.id}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (cached && Array.isArray(cached)) tasks = cached;
+  } catch {}
+
+  try {
+    const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString();
+    const { data, error } = await Promise.race([
+      sb.from("billi_tasks").select("*").or(`done.eq.false,done_at.gte.${weekAgo}`).order("due_date").order("due_time", { nullsFirst: false }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 2000))
+    ]);
+    if (!error && data) {
+      tasks = data;
+      try { localStorage.setItem(cacheKey, JSON.stringify(data)); } catch {}
+    }
+  } catch {}
 }
 const niceDate = iso => { const t = isoDate(); if (iso === t) return "Today"; const d = new Date(iso + "T12:00:00"); const diff = Math.round((d - new Date(t + "T12:00:00")) / 864e5); if (diff === 1) return "Tomorrow"; if (diff === -1) return "Yesterday"; return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }); };
 

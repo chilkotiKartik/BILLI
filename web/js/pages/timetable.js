@@ -11,11 +11,24 @@ const editable = () => source === "me" || classes.some(c => c.id === source && c
 const sourceName = () => (source === "me" ? "My own timetable" : (classes.find(c => c.id === source) || {}).name || "Class");
 
 async function load() {
-  let q = sb.from("billi_slots").select("id,subject,room,day,start_time,end_time").order("day").order("start_time");
-  q = source === "me" ? q.eq("user_id", user.id) : q.eq("class_id", source);
-  const { data, error } = await q;
-  if (error) throw error;
-  slots = data;
+  const cacheKey = `billi_slots_${user.id}_${source}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (cached && Array.isArray(cached)) slots = cached;
+  } catch {}
+
+  try {
+    let q = sb.from("billi_slots").select("id,subject,room,day,start_time,end_time").order("day").order("start_time");
+    q = source === "me" ? q.eq("user_id", user.id) : q.eq("class_id", source);
+    const { data, error } = await Promise.race([
+      q,
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 2000))
+    ]);
+    if (!error && data) {
+      slots = data;
+      try { localStorage.setItem(cacheKey, JSON.stringify(data)); } catch {}
+    }
+  } catch {}
 }
 
 function render() {
