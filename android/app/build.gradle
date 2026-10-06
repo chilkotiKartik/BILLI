@@ -3,6 +3,7 @@ apply plugin: 'com.android.application'
 android {
     namespace = "com.billi.app"
     compileSdk = rootProject.ext.compileSdkVersion
+    buildToolsVersion = rootProject.ext.buildToolsVersion
     defaultConfig {
         applicationId "com.billi.app"
         minSdkVersion rootProject.ext.minSdkVersion
