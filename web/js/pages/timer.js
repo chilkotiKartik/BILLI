@@ -121,8 +121,8 @@ main.addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
   const now = Date.now();
   const getBlocked = () => {
-    try { return JSON.parse(localStorage.getItem("billi_blocked_apps") || '["com.instagram.android","com.google.android.youtube","com.zhiliaoapp.musically","com.twitter.android","com.reddit.frontpage","com.facebook.katana"]'); }
-    catch { return ["com.instagram.android","com.google.android.youtube"]; }
+    try { return JSON.parse(localStorage.getItem("billi_blocked_apps") || '["com.instagram.android","com.google.android.youtube","com.snapchat.android","com.zhiliaoapp.musically","com.twitter.android","com.reddit.frontpage","com.facebook.katana","org.telegram.messenger","com.netflix.mediaclient"]'); }
+    catch { return ["com.instagram.android","com.google.android.youtube","com.snapchat.android"]; }
   };
 
   if (b.id === "go") {

@@ -31,9 +31,12 @@ function render() {
     <section class="card stack" aria-labelledby="s-al"><h2 id="s-al">Alarms</h2>
       <div class="field"><label for="s-lead">Ring before each class</label><select id="s-lead">${opt([0, 5, 10, 15], profile.lead_min, v => (v ? `${v} minutes before` : "At the start time"))}</select></div>
       <label class="switch"><span><b>Alarm sound</b></span><input type="checkbox" id="s-sound" ${profile.sound ? "checked" : ""}></label>
-      <fieldset><legend>Ringtone</legend><div class="seg" style="margin-top:6px">
-        ${Object.entries(TONE_NAMES).map(([k, l]) => `<label><input type="radio" name="tone" value="${k}" ${profile.ringtone === k ? "checked" : ""}><span>${l}</span></label>`).join("")}
-      </div><span class="hint" style="display:block;margin-top:6px;font-size:14.5px;color:var(--muted)">Tap one to hear it. The cat gets louder the longer you ignore it.</span></fieldset>
+      <fieldset><legend>Ringtone</legend><div class="seg" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
+        ${Object.entries(TONE_NAMES).map(([k, l]) => {
+          const cur = profile.ringtone || localStorage.getItem("billi_ringtone") || "uncle_ji";
+          return `<label><input type="radio" name="tone" value="${k}" ${cur === k ? "checked" : ""}><span>${l}</span></label>`;
+        }).join("")}
+      </div><span class="hint" style="display:block;margin-top:6px;font-size:14.5px;color:var(--muted)">Tap one to hear it.</span></fieldset>
       <p class="muted" style="font-size:15.5px">In a browser, Billi rings only while it is open in a tab. Ringing with the app closed needs the Android app, which is the next step.</p>
       <p id="s-nstate" class="muted" style="font-size:15.5px">${notifState()}</p>
       <div class="rowflex"><button type="button" class="btn sm" id="s-notif">${I.bell}Allow notifications</button><button type="button" class="btn sm" id="s-test">Test alarm</button><button type="button" class="btn sm" id="s-test2">Test solve to stop</button></div>
@@ -44,13 +47,16 @@ function render() {
         ${[
           { id: "com.instagram.android", label: "Instagram" },
           { id: "com.google.android.youtube", label: "YouTube" },
+          { id: "com.snapchat.android", label: "Snapchat" },
           { id: "com.twitter.android", label: "X / Twitter" },
           { id: "com.reddit.frontpage", label: "Reddit" },
           { id: "com.zhiliaoapp.musically", label: "TikTok / Reels" },
           { id: "com.facebook.katana", label: "Facebook" },
+          { id: "org.telegram.messenger", label: "Telegram" },
+          { id: "com.netflix.mediaclient", label: "Netflix" },
           { id: "com.discord", label: "Discord" }
         ].map(app => {
-          const currentBlocked = JSON.parse(localStorage.getItem("billi_blocked_apps") || '["com.instagram.android","com.google.android.youtube","com.twitter.android","com.reddit.frontpage"]');
+          const currentBlocked = JSON.parse(localStorage.getItem("billi_blocked_apps") || '["com.instagram.android","com.google.android.youtube","com.snapchat.android","com.twitter.android","com.reddit.frontpage"]');
           const isChecked = currentBlocked.includes(app.id);
           return `<label class="switch"><span><b>${esc(app.label)}</b></span><input type="checkbox" class="s-app-block" data-pkg="${esc(app.id)}" ${isChecked ? "checked" : ""}></label>`;
         }).join("")}
@@ -95,6 +101,7 @@ main.addEventListener("submit", async e => {
   if (row.gate_max < row.gate_min) { err.textContent = "The daily limit cannot be smaller than the daily goal."; $("#s-max").focus(); return; }
   busy(btn, true);
   try {
+    try { localStorage.setItem("billi_ringtone", row.ringtone); } catch {}
     const { data, error } = await sb.from("billi_profiles").update(row).eq("id", user.id).select().single();
     if (error) throw error;
     profile = Object.assign(profile, data); toast("Settings saved.", "ok");

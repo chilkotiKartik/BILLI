@@ -2,30 +2,21 @@
 
 Class alarms, tasks and daily GATE study, with a cat. A multi-page web app on Supabase.
 
-## What works today
+## 📱 Android APK Download
 
-- Sign in and sign up with email and password
-- Classes: create one, share its 6-character code, classmates join and get the same timetable
-- Timetable: your own slots and class slots, repeating weekly; the owner can cancel a class for one day
-- Today: next class, schedule, tasks, days to GATE, today's GATE minutes and a suggested GATE block in your free time
-- Tasks: College, GATE or Personal, with an optional alarm and "solve a sum to stop"
-- Timer: 25/5, 50/10, 90/20 and stopwatch; minutes are saved and count toward the daily GATE goal
-- Alarms: ring for classes, tasks and the GATE block **while the app is open in a browser tab**, with four ringtones made in the browser (meow, grumpy cat, kittens, bell)
-- GATE: the official GATE 2027 syllabus for all 30 papers plus General Aptitude (about 4,100 topics), tick-to-learn, reviews after 1, 3, 7 and 21 days, sections you are not taking can be switched off, links to the official papers and to NPTEL
+You can download and install the Android app directly on your phone:
+- **Direct APK in Repo**: [`android/app/build/outputs/apk/debug/app-debug.apk`](file:///c:/Users/chilk/Downloads/billi%20(1)/billi/android/app/build/outputs/apk/debug/app-debug.apk)
+- **Automated CI/CD Builds**: Built automatically on every push via [GitHub Actions](https://github.com/chilkotiKartik/BILLI/actions) and downloadable under the **Artifacts** tab.
 
-- Mock tests: official GATE question papers and answer keys from 2021 to 2026 (201 sets across 30 papers, linked to the official site). For 150 of them the app times you for 3 hours, takes your answers on an answer sheet and marks them against the official final key, with negative marking
-- Ask Billi: a Gemini doubt helper that knows your paper and section, with a daily limit per student. It needs a Gemini key (see below)
-- Lecture links: every syllabus section opens a YouTube search for NPTEL (IIT) lectures and for solved past questions on that section
-- Study mode: the timer fills the screen and counts each time you leave. A water reminder with a dancing cat appears every 45 minutes of study
+## ✨ Features
 
-## What is not here yet
-
-- Ringing with the app closed (needs the Android app)
-- Blocking other apps. A website cannot do that on any phone; it needs the Android app with a special permission
-- Question text inside the app (you read the official PDF and answer on the app's sheet), and an error log
-- Auto-marking for AR, GE, XE and XL (their papers have optional sections), for 2021, and for RA (a new paper with no past papers)
-- Hand-picked lecture videos per topic. The lecture links are searches, so they always work but are not curated
-- Offline use
+- **Funny & Desi Alarm Ringtones**: Choose between *Uncle Ji Paani Pila Dijiye*, *Funny Meme Alarm*, *Comedy Twinkle*, *Tenge Tenge*, *Lululu*, plus feline synthesizers (*Meow*, *Grumpy cat*, *Kittens*, *Bell*).
+- **Distraction Shield & App Blocker**: Native Android accessibility service that actively locks distracting social apps (Instagram, YouTube, Snapchat, X/Twitter, Reddit, Facebook, Telegram, TikTok/Reels, Netflix, Discord) while your study timer is active.
+- **GATE 2027 Complete Syllabus**: Official syllabus for all 30 papers + General Aptitude (~4,100 topics) with Spaced-Repetition System (reviews at 1, 3, 7, 21 days) and direct NPTEL lecture links.
+- **Real Past Paper Mock Tests**: Official GATE question papers and keys from 2021 to 2026 across 30 papers with 3-hour timer, official answer sheets, negative marking, and instant scoring.
+- **Ask Billi (AI Doubt Helper)**: Integrated with Google Gemini for instant explanations and solved GATE examples tailored to your paper and section.
+- **Shared Timetable & Class Hub**: Create or join classes with 6-character codes, synchronized schedules, cancel/skip classes, and automatic alarm triggers.
+- **Pomodoro & Focus Timer**: 25/5, 50/10, 90/20 & Stopwatch modes with fullscreen Study Mode and dancing cat water breaks every 45 minutes.
 
 ## Run it
 

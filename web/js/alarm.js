@@ -49,16 +49,74 @@ export const TONES = {
     for (let i = 0; i < k; i++) meow(ctx, t + i * 0.27, { lo: 950, hi: 1400 + 50 * i, end: 900, dur: 0.21, gain: 0.3 }); return k * 0.27 + 0.6; },
   bell(ctx, t, n) { ding(ctx, t, 880); ding(ctx, t + 0.22, 1174.7); return 1.1; }
 };
-export const TONE_NAMES = { meow: "Meow", grumpy: "Grumpy cat", kitten: "Kittens", bell: "Bell" };
-const toneOf = () => (who && TONES[who.profile.ringtone] ? who.profile.ringtone : "meow");
+export const AUDIO_FILES = {
+  uncle_ji: "sounds/uncle_ji_pani.mp3",
+  funny_meme: "sounds/funny_meme.mp3",
+  comedy_twinkle: "sounds/comedy_twinkle.mp3",
+  tenge_tenge: "sounds/tenge_tenge.mp3",
+  lululu: "sounds/lululu.mp3"
+};
+
+export const TONE_NAMES = {
+  uncle_ji: "Uncle Ji Paani Pila Dijiye",
+  funny_meme: "Funny Meme Alarm",
+  comedy_twinkle: "Comedy Twinkle",
+  tenge_tenge: "Tenge Tenge",
+  lululu: "Lululu Lululu",
+  meow: "Meow",
+  grumpy: "Grumpy cat",
+  kitten: "Kittens",
+  bell: "Bell"
+};
+
+let activeAudio = null;
+
+const toneOf = () => {
+  if (who && who.profile && (AUDIO_FILES[who.profile.ringtone] || TONES[who.profile.ringtone])) return who.profile.ringtone;
+  try {
+    const saved = localStorage.getItem("billi_ringtone");
+    if (saved && (AUDIO_FILES[saved] || TONES[saved])) return saved;
+  } catch {}
+  return "uncle_ji";
+};
+
 function startSound() {
-  stopSound(); if (!who || !who.profile.sound) return; unlock();
-  let n = 0; const tone = TONES[toneOf()];
+  stopSound(); if (!who || !who.profile || who.profile.sound === false) return;
+  const tKey = toneOf();
+  if (AUDIO_FILES[tKey]) {
+    try {
+      activeAudio = new Audio(AUDIO_FILES[tKey]);
+      activeAudio.loop = true;
+      activeAudio.play().catch(() => {});
+    } catch {}
+    return;
+  }
+  unlock();
+  let n = 0; const tone = TONES[tKey] || TONES.meow;
   const round = () => { let wait = 1.2; if (actx && actx.state === "running") wait = tone(actx, actx.currentTime + 0.02, n++); beepTimer = setTimeout(round, wait * 1000); };
   round();
 }
-function stopSound() { if (beepTimer) clearTimeout(beepTimer); beepTimer = null; }
-export function preview(name) { unlock(); if (actx && actx.state === "running" && TONES[name]) TONES[name](actx, actx.currentTime + 0.02, 3); }
+
+function stopSound() {
+  if (beepTimer) clearTimeout(beepTimer); beepTimer = null;
+  if (activeAudio) {
+    try { activeAudio.pause(); activeAudio.currentTime = 0; } catch {}
+    activeAudio = null;
+  }
+}
+
+export function preview(name) {
+  stopSound();
+  if (AUDIO_FILES[name]) {
+    try {
+      activeAudio = new Audio(AUDIO_FILES[name]);
+      activeAudio.play().catch(() => {});
+    } catch {}
+    return;
+  }
+  unlock();
+  if (actx && actx.state === "running" && TONES[name]) TONES[name](actx, actx.currentTime + 0.02, 3);
+}
 // Renders one ringtone silently and measures it. The tests use this to prove each one makes real, different, unclipped sound.
 export async function measureTone(name, rounds = 2) {
   const sr = 22050, ctx = new OfflineAudioContext(1, sr * 4, sr);
